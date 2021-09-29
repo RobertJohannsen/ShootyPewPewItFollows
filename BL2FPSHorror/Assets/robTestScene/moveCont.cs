@@ -24,8 +24,12 @@ public class moveCont : MonoBehaviour
     public enum moveState { none, planar, vault ,slide };
     public moveState state;
 
-    [Header("Basics")]
+    [Header("Functional Options")]
     public bool debug;
+    public bool canHeadbob;
+
+    [Header("Basics")]
+    
     public Vector3 downVelocity;
     private float gConst = -9.8f;
     private float gravMulti = 100;
@@ -104,6 +108,17 @@ public class moveCont : MonoBehaviour
     public float slJumpUpForce, slJumpFwForce;
 
 
+    [Header("Headbob Parameters")]
+    public float headbobStartThreshold;
+    public float headBobWalkSpeed;
+    public float headBobWalkAmount;
+    public float headBobCrouchSpeed;
+    public float headBobCrouchAmount;
+    public float headBobSrpintSpeed;
+    public float headBobSprintAmount;
+    private float defaultYpos = 0;
+    private float timer;
+
 
 
     [Header("camDolly stuff")]
@@ -126,6 +141,7 @@ public class moveCont : MonoBehaviour
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
+        defaultYpos = playerCam.transform.position.y;
     }
 
     void Start()
@@ -164,6 +180,8 @@ public class moveCont : MonoBehaviour
         Physics.Raycast(playerCam.position, playerCam.forward, out placePoint, 1000, whatIsGround);
         MyInput();
         Look();
+        showDebug();
+        handleHeadbob();
     }
 
     /// <summary>
@@ -171,7 +189,14 @@ public class moveCont : MonoBehaviour
     /// </summary>
     /// this uses dani's code as a base and builds upon it , get the code here https://github.com/DaniDevy/FPS_Movement_Rigidbody
     /// 
-
+    void showDebug()
+    {
+        if (debug)
+        {
+            if ((int)rb.velocity.magnitude != 0)
+                Debug.Log(rb.velocity.magnitude + " / " + maxSpeed);
+        }
+    }
  
     private void MyInput()
     {
@@ -252,11 +277,7 @@ public class moveCont : MonoBehaviour
         xPrevious = xRaw;
         yPrevious = yRaw;
 
-        if(debug)
-        {
-            if ((int)rb.velocity.magnitude != 0)
-                Debug.Log(rb.velocity.magnitude + " / " + maxSpeed);
-        }
+      
     }
 
     #region Cursor Functions
@@ -274,6 +295,24 @@ public class moveCont : MonoBehaviour
         Cursor.visible = true;
     }
     #endregion
+
+    void handleHeadbob()
+    {
+        if(canHeadbob)
+        {
+            if (!grounded) return;
+
+            if(rb.velocity.magnitude > headbobStartThreshold)
+            {
+                 
+                timer += Time.deltaTime;
+                playerCam.transform.localPosition = new Vector3(
+                    playerCam.transform.localPosition.x
+                    , defaultYpos + (crouching ? headBobCrouchAmount : headBobWalkAmount) * Mathf.Sin(timer * (crouching ? headBobCrouchSpeed : headBobWalkSpeed))
+                    , playerCam.transform.localPosition.z);
+            }
+        }
+    }
     void handleMovePly()
     {
         switch (state)
