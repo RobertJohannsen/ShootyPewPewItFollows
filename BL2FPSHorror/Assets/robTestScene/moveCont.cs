@@ -109,14 +109,16 @@ public class moveCont : MonoBehaviour
 
 
     [Header("Headbob Parameters")]
+    public AnimationCurve headbobCurve;
     public float headbobStartThreshold;
+    public float headbobYOffset;
     public float headBobWalkSpeed;
     public float headBobWalkAmount;
     public float headBobCrouchSpeed;
     public float headBobCrouchAmount;
     public float headBobSrpintSpeed;
     public float headBobSprintAmount;
-    private float defaultYpos = 0;
+    public float defaultYpos = 0;
     private float timer;
 
 
@@ -141,7 +143,7 @@ public class moveCont : MonoBehaviour
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
-        defaultYpos = playerCam.transform.position.y;
+        defaultYpos = playerCam.transform.localPosition.y;
     }
 
     void Start()
@@ -308,8 +310,15 @@ public class moveCont : MonoBehaviour
                 timer += Time.deltaTime;
                 playerCam.transform.localPosition = new Vector3(
                     playerCam.transform.localPosition.x
-                    , defaultYpos + (crouching ? headBobCrouchAmount : headBobWalkAmount) * Mathf.Sin(timer * (crouching ? headBobCrouchSpeed : headBobWalkSpeed))
+                    , defaultYpos + ((crouching ? headBobCrouchAmount : headBobWalkAmount) * Mathf.Sin(timer * (crouching ? headBobCrouchSpeed : headBobWalkSpeed)) - headbobYOffset)
                     , playerCam.transform.localPosition.z);
+            }
+            else
+            {
+                playerCam.transform.localPosition = new Vector3(
+                   playerCam.transform.localPosition.x
+                   , defaultYpos - headbobYOffset
+                   , playerCam.transform.localPosition.z);
             }
         }
     }
@@ -506,6 +515,7 @@ public class moveCont : MonoBehaviour
         Vector2 mag = FindVelRelativeToLook();
         float xMag = mag.x, yMag = mag.y;
 
+
         //Counteract sliding and sloppy movement
         if ((grounded && !wasSliding))
         {
@@ -519,7 +529,6 @@ public class moveCont : MonoBehaviour
             Jump();
 
         }
-
 
 
         //Set max speed
