@@ -22,9 +22,11 @@ public class navWallinEditor : MonoBehaviour
         if (!this.GetComponent<BoxCollider>()) return;
         if (!this.GetComponent<NavMeshSurface>()) return;
 
-        this.GetComponent<BoxCollider>().center = Vector3.zero;
-        this.GetComponent<NavMeshSurface>().center = Vector3.zero;
+        this.GetComponent<BoxCollider>().center = this.GetComponent<NavMeshSurface>().center;
+        this.GetComponent<NavMeshSurface>().size = new Vector3(this.GetComponent<NavMeshSurface>().size.x, Mathf.Clamp(this.GetComponent<NavMeshSurface>().size.y, 0, 1.5f), this.GetComponent<NavMeshSurface>().size.z);
+        
         this.GetComponent<BoxCollider>().size = this.GetComponent<NavMeshSurface>().size;
+
     }
 
 
