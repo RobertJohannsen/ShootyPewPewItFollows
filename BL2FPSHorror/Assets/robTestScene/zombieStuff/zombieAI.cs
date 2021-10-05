@@ -108,7 +108,7 @@ public class zombieAI : MonoBehaviour
             // the vector of the line goinf down to find the ledge
             //Debug.DrawRay(LedgePoint, -transform.up, Color.cyan);
             Physics.Raycast(LedgePoint, -transform.up, out ledgeHit , levelGeo); // the point of the ledge grab
-        Debug.Log(ledgeHit.point);
+        //Debug.Log(ledgeHit.point);
 
 
             Debug.DrawRay(ledgeHit.point + (-wallCheck.normal), Vector3.up, Color.blue);
