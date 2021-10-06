@@ -19,7 +19,7 @@ public class zombieAI : MonoBehaviour
     public bool inRange;
     public int attackStep, attackWindUp, attackCooldownStep, attackCooldown;
     public int damage;
-    public float 
+    public float alertRadius;
 
     public int Hp, MaxHp;
 
@@ -46,7 +46,7 @@ public class zombieAI : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if((this.transform.position - player.transform.position).magnitude < ) {
+        if((this.transform.position - player.transform.position).magnitude < alertRadius) {
             isActive = true;
         }
         if (isActive && !stunned)
@@ -89,8 +89,6 @@ public class zombieAI : MonoBehaviour
        
     }
 
-  
-
     void CheckForAttack()
     {
         inRange = false;
@@ -118,12 +116,6 @@ public class zombieAI : MonoBehaviour
         player.GetComponent<moveCont>().takeDamage(damage);
         Debug.Log("hit player");
     }
-
-   
-
-  
-
-   
 
     void checkFOV()
     {

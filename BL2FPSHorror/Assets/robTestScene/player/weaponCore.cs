@@ -83,16 +83,7 @@ public class weaponCore : MonoBehaviour
 
             if (bashHit.collider.gameObject != null)
             {
-                switch (bashHit.collider.gameObject.tag)
-                {
-                    case "zombieHead":
 
-                        bashHit.collider.gameObject.GetComponent<zombieScriptReferenceLib>()._zombieAI.doStun();
-                        break;
-                    case "zombieBody":
-                        bashHit.collider.gameObject.GetComponent<zombieScriptReferenceLib>()._zombieAI.doStun();
-                        break;
-                }
             }
            
         }
@@ -141,12 +132,7 @@ public class weaponCore : MonoBehaviour
 
         switch (weaponHit.collider.gameObject.tag)
         {
-            case "zombieHead":
-                weaponHit.collider.gameObject.transform.parent.parent.parent.GetComponent<zombieAI>().takeDamage(weaponDamage);
-                break;
-            case "zombieBody":
-                weaponHit.collider.gameObject.transform.parent.parent.parent.GetComponent<zombieAI>().takeDamage(weaponDamage);
-                break;
+        
         }
 
     }
