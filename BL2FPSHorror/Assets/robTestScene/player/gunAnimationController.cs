@@ -33,4 +33,5 @@ public class gunAnimationController : MonoBehaviour
     {
         weaponAnimator.Play("bash");
     }
-}
+
+ }

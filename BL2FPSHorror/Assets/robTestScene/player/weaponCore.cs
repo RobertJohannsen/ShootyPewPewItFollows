@@ -13,16 +13,20 @@ public class weaponCore : MonoBehaviour
     public float baseAimConeAccuracy, moveAimConeAccuracy , currentAimCone;
     public float maxShotDistance;
     public int currentAmmo, magCapacity , ammoPool;
+    public int bashDuration, bashStep;
     public Vector3 shootAfterSpreadDirection;
+    public int weaponDamage;
     public enum reState { no , eject , insert }
     public reState gunState;
+    public bool startBash;
     /// <summary>
     ///  no -> eject -> insert -> no
     /// </summary>
     // Start is called before the first frame update
     void Start()
     {
-        
+        startBash = false;
+        currentAmmo = magCapacity;
     }
 
     // Update is called once per frame
@@ -55,6 +59,42 @@ public class weaponCore : MonoBehaviour
         Debug.DrawRay(weaponBarrel.transform.position, shootAfterSpreadDirection, Color.black);
         tryFireWeapon();
         cycleCycle();
+        gunBash();
+
+    }
+
+    public void gunBash()
+    {
+        if(startBash)
+        {
+            bashStep++;
+            bashStep = Mathf.Clamp(bashStep, 0, bashDuration);
+            RaycastHit bashHit;
+            Physics.Raycast(weaponBarrel.transform.position, transform.forward, out bashHit, maxShotDistance);
+            Debug.DrawRay(weaponBarrel.transform.position, weaponBarrel.transform.forward , Color.cyan);
+
+            
+
+            if(bashStep == bashDuration)
+            {
+                bashStep = 0;
+                startBash = false;
+            }
+
+            if (bashHit.collider.gameObject != null)
+            {
+                switch (bashHit.collider.gameObject.tag)
+                {
+                    case "zombieHead":
+                        bashHit.collider.gameObject.GetComponent<zombieScriptReferenceLib>()._zombieAI.doStun();
+                        break;
+                    case "zombieBody":
+                        bashHit.collider.gameObject.GetComponent<zombieScriptReferenceLib>()._zombieAI.doStun();
+                        break;
+                }
+            }
+           
+        }
     }
 
     public void tryFireWeapon()
@@ -88,17 +128,26 @@ public class weaponCore : MonoBehaviour
     public void fireWeapon()
     {
         gunAnimationCont.callShootAnimation();
-        Debug.Log("fired gun");
         float x = Random.insideUnitCircle.x * currentAimCone;
         float y = Random.insideUnitCircle.y * currentAimCone; ;
         float z = Random.Range(-currentAimCone / 1, currentAimCone/ 1);
 
         //Calculate Direction with Spread
-        Vector3 shootAfterSpreadDirection = weaponBarrel.transform.forward + new Vector3(-x, -y, -z);
+        //Vector3 shootAfterSpreadDirection = weaponBarrel.transform.forward + new Vector3(-x, -y, -z);
 
         RaycastHit weaponHit;
-        Physics.Raycast(weaponBarrel.transform.position, shootAfterSpreadDirection , out weaponHit , maxShotDistance);
-        
+        Physics.Raycast(Camera.main.transform.position, Camera.main.transform.forward , out weaponHit , maxShotDistance);
+
+        switch (weaponHit.collider.gameObject.tag)
+        {
+            case "zombieHead":
+                weaponHit.collider.gameObject.transform.parent.parent.parent.GetComponent<zombieAI>().takeDamage(weaponDamage);
+                break;
+            case "zombieBody":
+                weaponHit.collider.gameObject.transform.parent.parent.parent.GetComponent<zombieAI>().takeDamage(weaponDamage);
+                break;
+        }
+
     }
 
     public void reload()
@@ -110,6 +159,14 @@ public class weaponCore : MonoBehaviour
             ammoPool = Mathf.Clamp(ammoPool, 0, 1000);
             gunAnimationCont.callReloadAnimation();
         }
+        else
+        {
+            if(ammoPool != 0)
+            {
+                currentAmmo = ammoPool;
+                ammoPool = 0;
+            }
+        }
        
 
         
@@ -118,6 +175,7 @@ public class weaponCore : MonoBehaviour
     public void bash()
     {
         gunAnimationCont.callBashAnimation();
+        startBash = true;
     }
 
     private void cycleCycle()

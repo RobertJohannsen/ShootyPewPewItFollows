@@ -18,6 +18,10 @@ public class moveCont : MonoBehaviour
     //Other
     private Rigidbody rb;
 
+    [Header("Player stats")]
+    public int HP, maxHP;
+
+
 
     //basics
 
@@ -142,6 +146,8 @@ public class moveCont : MonoBehaviour
 
     void Awake()
     {
+        maxHP = 100;
+        HP = 100;
         rb = GetComponent<Rigidbody>();
         defaultYpos = playerCam.transform.localPosition.y;
     }
@@ -198,6 +204,11 @@ public class moveCont : MonoBehaviour
             if ((int)rb.velocity.magnitude != 0)
                 Debug.Log(rb.velocity.magnitude + " / " + maxSpeed);
         }
+    }
+
+    public void takeDamage( int attackDamage)
+    {
+        HP -= attackDamage;
     }
  
     private void MyInput()

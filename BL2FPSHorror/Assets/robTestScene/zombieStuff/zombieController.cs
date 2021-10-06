@@ -7,7 +7,7 @@ public class zombieController : MonoBehaviour
     public float radiusFromTarget;
     public bool aiActive, fakebutton;
     private bool fakebuttonprev;
-    public GameObject player, pointer;
+    public GameObject player;
 
     public enum switchTargetState { pointer , player};
     public switchTargetState targetState;
@@ -53,10 +53,6 @@ public class zombieController : MonoBehaviour
             case switchTargetState.player:
                 return player;
                 break;
-            case switchTargetState.pointer:
-                return pointer;
-                break;
-            default:
                 return player;
                 break;
         }

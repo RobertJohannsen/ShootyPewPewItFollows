@@ -764,7 +764,7 @@ MonoBehaviour:
   currentWeaponID: 0
   weaponLib: {fileID: 0}
   gunAnimationCont: {fileID: 7532074833934273885}
-  weaponBarrel: {fileID: 0}
+  weaponBarrel: {fileID: 8176838863672571184}
   triggerDown: 0
   shootReady: 0
   elapseCycleTime: 0
@@ -775,6 +775,9 @@ MonoBehaviour:
   currentAimCone: 1
   maxShotDistance: 100
   currentAmmo: 20
+  magCapacity: 0
+  ammoPool: 0
+  shootAfterSpreadDirection: {x: 0, y: 0, z: 0}
   gunState: 0
 --- !u!114 &20800442533769401
 MonoBehaviour:

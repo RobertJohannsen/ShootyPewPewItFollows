@@ -5,6 +5,9 @@ TagManager:
   serializedVersion: 2
   tags:
   - prefabCont
+  - zombieCont
+  - zombieHead
+  - zombieBody
   layers:
   - Default
   - TransparentFX

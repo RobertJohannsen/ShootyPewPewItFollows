@@ -18,16 +18,28 @@ public class zombieAI : MonoBehaviour
     public zombieState currentSubroutine;
     public zombieVisualsBehaviour zVisualsBehaviour;
 
-    Vector3 LedgePoint;
-    RaycastHit wallCheck, ledgeHit;
+    public bool inRange;
+    public int attackStep, attackWindUp, attackCooldownStep, attackCooldown;
+    public int damage;
+
+    public int Hp, MaxHp;
+
+    public bool stunned;
+    public int stunStep, stunDur;
+
+    private Vector3 LedgePoint;
+    private RaycastHit wallCheck, ledgeHit;
     public float wallCheckHeight;
+    
     // Start is called before the first frame update
     private void Awake()
     {
+        Hp = MaxHp;
         zombieAgent = this.GetComponent<NavMeshAgent>();
     }
     void Start()
     {
+        stunned = false;
         player = GetComponentInParent<zombieController>().player.transform;
         zombieAgent.updateUpAxis = false;
         zVisualsBehaviour = this.GetComponentInChildren<zombieVisualsBehaviour>();
@@ -36,12 +48,83 @@ public class zombieAI : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if(isActive)
+        if((this.transform.position - player.transform.position).magnitude < 20) {
+            isActive = true;
+        }
+        if (isActive && !stunned)
         doSubRoutines();
        
         checkFOV();
 
         CalculateWallSubPos();
+
+        CheckForAttack();
+        CheckForStun();
+    }
+
+    void CheckForStun()
+    {
+        if(stunned)
+        {
+            stunStep++;
+            stunStep = Mathf.Clamp(stunStep, 0, stunDur);
+
+            if(stunStep == stunDur)
+            {
+                stunned = false;
+                zVisualsBehaviour.restartFollow();
+            }
+        }
+    }
+    public void takeDamage( int damage)
+    {
+        Hp -= damage;
+        Hp = Mathf.Clamp(Hp, 0, MaxHp);
+
+        if(Hp == 0) 
+        {
+            Destroy(this.gameObject);
+        }
+    }
+
+    public void doStun()
+    {
+        stunStep = 0;
+        stunned = true;
+        calculateStunPos(); //knock back
+    }
+
+    void calculateStunPos()
+    {
+        zVisualsBehaviour.stopFollow();
+    }
+
+    void CheckForAttack()
+    {
+        inRange = false;
+        if (((this.transform.position - player.transform.position).magnitude < 2.5) && !stunned)
+        {
+            inRange = true;
+        }
+
+        if(inRange)
+        {
+            attackStep++;
+            attackStep = Mathf.Clamp(attackStep, 0, attackWindUp);
+         
+        }
+
+        if (attackStep == attackWindUp)
+        {
+            attackStep = 0;
+            doAttack();
+        }
+    }
+
+    private void doAttack()
+    {
+        player.GetComponent<moveCont>().takeDamage(damage);
+        Debug.Log("hit player");
     }
 
     private void doSubRoutines()
@@ -69,7 +152,7 @@ public class zombieAI : MonoBehaviour
         zombieAgent.stoppingDistance = radiusFromTarget;
         Vector3 temp = this.transform.position - target.position;
         zombieAgent.destination = target.position;
-        targetPointer.transform.position = (temp.normalized * radiusFromTarget) + target.position;
+       // targetPointer.transform.position = (temp.normalized * radiusFromTarget) + target.position;
 
         if (this.transform.position == zombieAgent.destination)
         {

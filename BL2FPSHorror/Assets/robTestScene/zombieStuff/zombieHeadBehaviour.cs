@@ -9,7 +9,7 @@ public class zombieHeadBehaviour : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        player = this.transform.parent.parent.parent.parent.gameObject.GetComponent<zombieController>().player;
+        player = GameObject.FindGameObjectWithTag("zombieCont").gameObject.GetComponent<zombieController>().player;
 
         zHead = this.gameObject;
     }

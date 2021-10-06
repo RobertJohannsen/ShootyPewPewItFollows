@@ -63,7 +63,6 @@ public class zombieVisualsBehaviour : MonoBehaviour
         this.transform.parent = null;
         this.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.None;
             followTarget = false;
-        Debug.Log("stopped follow");
     }
 
     public void standUp()
