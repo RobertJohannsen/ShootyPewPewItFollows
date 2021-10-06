@@ -86,6 +86,7 @@ public class weaponCore : MonoBehaviour
                 switch (bashHit.collider.gameObject.tag)
                 {
                     case "zombieHead":
+
                         bashHit.collider.gameObject.GetComponent<zombieScriptReferenceLib>()._zombieAI.doStun();
                         break;
                     case "zombieBody":
