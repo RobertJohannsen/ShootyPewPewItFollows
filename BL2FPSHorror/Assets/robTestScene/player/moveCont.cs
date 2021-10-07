@@ -31,6 +31,7 @@ public class moveCont : MonoBehaviour
     [Header("Functional Options")]
     public bool debug;
     public bool canHeadbob;
+    public bool useRaw;
 
     [Header("Basics")]
     
@@ -248,47 +249,57 @@ public class moveCont : MonoBehaviour
         /// percentage max = 1 
         /// 
 
-        xScaledInput = Mathf.Clamp(xInt / xInputIntThreshold , -1 , 1);
-        yScaledInput = Mathf.Clamp(yInt / yInputIntThreshold , -1 , 1);
-
-        switch (xRaw) 
+        if(!useRaw) 
         {
-            case 1:
-                x = xScaledInput;
-                break;
-            case -1:
-                x = xScaledInput;
-                break;
-            case 0:
-                x = 0;
-                break;
-        }
+            xScaledInput = Mathf.Clamp(xInt / xInputIntThreshold, -1, 1);
+            yScaledInput = Mathf.Clamp(yInt / yInputIntThreshold, -1, 1);
 
-        switch (yRaw)
-        {
-            case 1:
-                y = yScaledInput;
-                break;
-            case -1:
-                y = yScaledInput;
-                break;
-            case 0:
-                y = 0;
-                break;
-        }
+            switch (xRaw)
+            {
+                case 1:
+                    x = xScaledInput;
+                    break;
+                case -1:
+                    x = xScaledInput;
+                    break;
+                case 0:
+                    x = 0;
+                    break;
+            }
 
-        if ((xPrevious != xRaw) && (xRaw != 0))
+            switch (yRaw)
+            {
+                case 1:
+                    y = yScaledInput;
+                    break;
+                case -1:
+                    y = yScaledInput;
+                    break;
+                case 0:
+                    y = 0;
+                    break;
+            }
+
+            if ((xPrevious != xRaw) && (xRaw != 0))
+            {
+                x = xRaw;
+            }
+
+            if ((yPrevious != yRaw) && (yRaw != 0))
+            {
+                y = yRaw;
+            }
+
+            xPrevious = xRaw;
+            yPrevious = yRaw;
+        }
+        else
         {
             x = xRaw;
-        }
-
-        if ((yPrevious != yRaw) && (yRaw != 0))
-        {
             y = yRaw;
         }
 
-        xPrevious = xRaw;
-        yPrevious = yRaw;
+      
 
       
     }
