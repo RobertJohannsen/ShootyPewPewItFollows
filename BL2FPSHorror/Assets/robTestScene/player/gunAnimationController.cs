@@ -26,9 +26,13 @@ public class gunAnimationController : MonoBehaviour
 
     public void callReloadAnimation()
     {
-       // weaponAnimator.Play("reloadstart");
+        weaponAnimator.Play("reload");
     }
 
+    public void callReloadEndAnimation()
+    {
+        weaponAnimator.Play("reloadEnd");
+    }
     public void callBashAnimation()
     {
         weaponAnimator.Play("bash");

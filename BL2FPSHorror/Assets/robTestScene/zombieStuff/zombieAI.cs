@@ -20,9 +20,13 @@ public class zombieAI : MonoBehaviour
     public float speedTopBracket;
     public bool isMove;
     public bool startBreaking;
+    public bool didAttack;
+    public int bleedStacks;
+    public bool damageBreak;
+    public float speedinUse;
 
 
-    public int Hp, MaxHp;
+    public float Hp, MaxHp;
 
     public float radiusFromTarget;
 
@@ -38,10 +42,19 @@ public class zombieAI : MonoBehaviour
     public float baseSpeed;
     public float normalRunningTurningSpeed;
     public float inRangeOfPlayerTurningSpeed;
+    public Vector3 storeVelocity;
+    public int damageCeiling;
+    public float bleedDamage;
+    public int bleedStep, bleedTime;
+    public int damageStunStep, damageStunTime;
+
+    public AnimationCurve healthSlowdownCurve;
+    public float healthSlowMultiplier;
 
     public float rotationSpeed;
     public float FOV, FOVradius, playerDetectionRadius;
     public int attackStep, attackWindUp;
+    public float attackRange;
     public int damage;
     public float alertRadius;
     public int stunStep, stunDur;
@@ -59,15 +72,23 @@ public class zombieAI : MonoBehaviour
     }
     void Start()
     {
+        speedinUse = zombieAgent.speed;
         stunned = false;
         zombieAgent.updateUpAxis = false;
-        zombieAgent.stoppingDistance = 2;
+        zombieAgent.stoppingDistance = 1.25f;
         visualisePath();
     }
 
     // Update is called once per frame
     void Update()
     {
+        if(didAttack)
+        {
+            zombieAgent.velocity = storeVelocity;
+            storeVelocity = Vector3.zero;
+            didAttack = false;
+
+        }
         
         distanceToPlayer = (this.transform.position - player.transform.position).magnitude;
 
@@ -80,9 +101,10 @@ public class zombieAI : MonoBehaviour
 
         isMove = currentSpeed == 0 ? false : true;
 
-        float topTierSpeedThres = ((Mathf.Clamp(speedTopBracket, 0, 100)) / 100) * zombieAgent.speed;
+        float topTierSpeedThres = ((Mathf.Clamp(speedTopBracket, 0, 100)) / 100) * speedinUse;
         if (currentSpeed > topTierSpeedThres) 
         {
+            attackStep = attackWindUp;
             timeInTopSpeed += Time.deltaTime;
             timeInTopSpeed = Mathf.Clamp(timeInTopSpeed, 0, maxTimeInTopSpeed);
 
@@ -103,12 +125,12 @@ public class zombieAI : MonoBehaviour
         {
             if(currentSpeed > inRangeSlowdownSpeed)
             {
-                zombieAgent.speed = inRangeSlowdownSpeed;
+                speedinUse = inRangeSlowdownSpeed;
             }
             else
             {
                 startBreaking = false;
-                zombieAgent.speed = baseSpeed;
+                speedinUse = baseSpeed;
             }
         }
 
@@ -131,16 +153,35 @@ public class zombieAI : MonoBehaviour
             zombieAgent.angularSpeed = normalRunningTurningSpeed;
         }
             zombieAgent.acceleration = Mathf.Clamp((accelerationCurve.Evaluate(moveTimeElapsed / timeToMaxAcceleration)) * maxAcceleration ,accelerationFloor , maxAcceleration);
-            
-        
 
-            zombieAgent.destination = player.transform.position;
+        healthSlowdown();
+
+        zombieAgent.destination = player.transform.position;
         Debug.DrawRay(this.transform.position, this.transform.forward);
         //Debug.Log(zombieAgent.velocity.magnitude);
+        checkBleedStacks();
         visualisePath();
         checkFOV();
         CheckForAttack();
         CheckForStun();
+    }
+
+    private void healthSlowdown()
+    {
+        float temp = Hp / MaxHp;
+        healthSlowMultiplier = healthSlowdownCurve.Evaluate(-temp + 1);
+        zombieAgent.speed = speedinUse * healthSlowMultiplier;
+    }
+
+    private void LateUpdate()
+    {
+
+        
+
+        if (Hp == 0)
+        {
+            Destroy(this.gameObject);
+        }
     }
 
     void checkFOV()
@@ -155,35 +196,52 @@ public class zombieAI : MonoBehaviour
         if (targetDirFromEyes.magnitude < FOVradius)
         {
             Debug.DrawRay(eyes.transform.position, targetDirFromEyes, Color.cyan);
-            Physics.Raycast(eyes.transform.position, targetDirFromEyes, out eyeHit , 100f);
-
-            if (eyeHit.collider.gameObject.GetComponent<moveCont>())
+            if(Physics.Raycast(eyes.transform.position, targetDirFromEyes, out eyeHit , 100f))
             {
-                if (targetDir.magnitude < FOVradius)
+                if (eyeHit.collider.gameObject.GetComponent<moveCont>() && eyeHit.collider.gameObject)
                 {
-                    Vector3 dir = player.transform.position - transform.position;
-                    dir.y = 0;//This allows the object to only rotate on its y axis
-                    Quaternion rot = Quaternion.LookRotation(dir);
-                    transform.rotation = Quaternion.Lerp(transform.rotation, rot, rotationSpeed * Time.deltaTime);
-
-                    if (angleToPlayer >= -FOV / 2 && angleToPlayer <= FOV / 2)
+                    if (targetDir.magnitude < FOVradius)
                     {
-                        
-                    }
-                    else
-                    {
-                       
-                    }
+                        Vector3 dir = player.transform.position - transform.position;
+                        dir.y = 0;//This allows the object to only rotate on its y axis
+                        Quaternion rot = Quaternion.LookRotation(dir);
+                        transform.rotation = Quaternion.Lerp(transform.rotation, rot, rotationSpeed * Time.deltaTime);
+
+                        if (angleToPlayer >= -FOV / 2 && angleToPlayer <= FOV / 2)
+                        {
+
+                        }
+                        else
+                        {
+
+                        }
 
 
+                    }
                 }
             }
+
+           
 
         }
 
 
 
        
+    }
+
+    void checkBleedStacks()
+    {
+        if(bleedStacks > 0)
+        {
+            bleedStep++;
+
+                if(bleedStep == bleedTime)
+                {
+                bleedStep = 0;
+                    Hp -= bleedDamage * bleedStacks;
+                }
+        }
     }
 
     void visualisePath()
@@ -199,6 +257,7 @@ public class zombieAI : MonoBehaviour
             lr.enabled = false;
         }
     }
+
     #region old stuff
     void CheckForStun()
     {
@@ -213,28 +272,46 @@ public class zombieAI : MonoBehaviour
             }
         }
     }
-    public void takeDamage( int damage)
+    public void takeDamage( int damage , float multiplier)
     {
-        Hp -= damage;
-        Hp = Mathf.Clamp(Hp, 0, MaxHp);
+        multiplier = multiplier > 0 ? multiplier : 1;
 
-        if(Hp == 0) 
+        int calculatedDamage = (int)(damage * multiplier);
+        calculatedDamage = Mathf.Clamp(calculatedDamage, 0, damageCeiling);
+        Hp -= calculatedDamage;
+        Hp = Mathf.Clamp(Hp, 0, MaxHp);
+        bleedStacks++;
+        storeVelocity = zombieAgent.velocity;
+
+        float topTierSpeedThres = ((Mathf.Clamp(speedTopBracket, 0, 100)) / 100) * speedinUse;
+        if (zombieAgent.velocity.magnitude > topTierSpeedThres)
         {
-            Destroy(this.gameObject);
+            zombieAgent.velocity = (-storeVelocity * 0.7f) + storeVelocity;
         }
+        else
+        {
+            zombieAgent.velocity = (-storeVelocity * 0.4f) + storeVelocity;
+        }
+        
+
+
     }
 
-    public void doStun()
+    public void doStun(float bashForce)
     {
         stunStep = 0;
         stunned = true;
-       
+
+        storeVelocity = zombieAgent.velocity;
+        Vector3 storedVelocityDir = zombieAgent.velocity.normalized + zombieAgent.transform.position;
+            zombieAgent.velocity = (-zombieAgent.transform.forward *bashForce);
+
     }
 
     void CheckForAttack()
     {
         inRange = false;
-        if (((this.transform.position - player.transform.position).magnitude < 2.5) && !stunned)
+        if (((this.transform.position - player.transform.position).magnitude < attackRange) && !stunned)
         {
             inRange = true;
         }
@@ -246,7 +323,7 @@ public class zombieAI : MonoBehaviour
          
         }
 
-        if (attackStep == attackWindUp)
+        if (attackStep == attackWindUp && inRange)
         {
             attackStep = 0;
             doAttack();
@@ -255,8 +332,11 @@ public class zombieAI : MonoBehaviour
 
     private void doAttack()
     {
+        zombieAgent.velocity = storeVelocity;
+        zombieAgent.velocity = Vector3.zero;
         player.GetComponent<moveCont>().takeDamage(damage);
-        Debug.Log("hit player");
+        didAttack = true;
+        
     }
 
   

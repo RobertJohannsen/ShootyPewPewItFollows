@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using EZCameraShake;
 
 public class moveCont : MonoBehaviour
 {
@@ -57,6 +58,7 @@ public class moveCont : MonoBehaviour
     public float moveSpeed;
     public float speedBase ,scaledSpeed;
     public float maxSpeed;
+    public float speedCap;
     public float speedFloor;
     public bool grounded;
     public LayerMask whatIsGround;
@@ -144,6 +146,13 @@ public class moveCont : MonoBehaviour
 
     public bool airGround;
 
+    [Header("Damage Stuff")]
+    public bool slowdownAfterDamage;
+    public float slowDamageModifier; //modifier
+    public float maxSlowDamageModifier; //base slow value
+    public float slowModifierStep ,slowModifierMaxTime; //amount of time in slow
+    public AnimationCurve slowModifierCurve; //curve
+
 
     void Awake()
     {
@@ -155,7 +164,7 @@ public class moveCont : MonoBehaviour
 
     void Start()
     {
-        baseFOV = playerCam.gameObject.GetComponent<Camera>().fieldOfView;
+        //baseFOV = playerCam.gameObject.GetComponent<Camera>().fieldOfView;
         ply = this.gameObject.transform;
         playerScale = transform.localScale;
         EnableCursor();
@@ -183,8 +192,23 @@ public class moveCont : MonoBehaviour
 
     private void Update()
     {
+        if(slowdownAfterDamage)
+        {
+            slowModifierStep++;
+            slowModifierStep = Mathf.Clamp(slowModifierStep, 0, slowModifierMaxTime);
+            float test = slowModifierStep / slowModifierMaxTime;
+            slowDamageModifier = slowModifierCurve.Evaluate(test);
+            slowDamageModifier = Mathf.Clamp(slowDamageModifier, 0, maxSlowDamageModifier);
+        }
+
+        if(slowModifierStep == slowModifierMaxTime)
+        {
+            slowModifierStep = 0;
+            slowdownAfterDamage = false;
+        }
 
 
+        //moveSpeed = speedCap - slowDamageModifier;
         RaycastHit placePoint;
         Physics.Raycast(playerCam.position, playerCam.forward, out placePoint, 1000, whatIsGround);
         MyInput();
@@ -210,6 +234,11 @@ public class moveCont : MonoBehaviour
     public void takeDamage( int attackDamage)
     {
         HP -= attackDamage;
+        slowdownAfterDamage = true;
+        slowModifierStep = 0;
+        CameraShaker.Instance.ShakeOnce(15f, 2f, .1f, 0.5f);
+
+
     }
  
     private void MyInput()
@@ -226,7 +255,7 @@ public class moveCont : MonoBehaviour
 
         tapSprint = Input.GetKeyDown(KeyCode.LeftShift);
 
-        playerCam.gameObject.GetComponent<Camera>().fieldOfView = baseFOV + camZoomMod - camZoomedMod;
+        //playerCam.transform.GetChild(0).gameObject.GetComponent<Camera>().fieldOfView = baseFOV + camZoomMod - camZoomedMod;
         //Crouching
         if (Input.GetKeyDown(KeyCode.LeftControl))
             StartCrouch();
@@ -349,7 +378,6 @@ public class moveCont : MonoBehaviour
         switch (state)
         {
             case moveState.planar:
-                airSlide();
                 Movement();
                 camDolly.transform.localRotation = Quaternion.Euler(0, 0, 0);
                 break;
@@ -597,10 +625,12 @@ public class moveCont : MonoBehaviour
 
         // crouch movespeed
         if (grounded && crouching) multiplierV = 0.25f;
+        multiplier -= slowDamageModifier;
+        multiplier = Mathf.Clamp(multiplier, 0.01f, 100);
 
         //Apply forces to move player
         rb.AddForce(orientation.transform.forward * y * moveSpeed * Time.deltaTime * multiplier * multiplierV);
-        rb.AddForce(orientation.transform.right * x * moveSpeed * Time.deltaTime * multiplier);
+        rb.AddForce(orientation.transform.right * x * moveSpeed * Time.deltaTime * multiplier );
     }
 
     private void Jump()
@@ -737,18 +767,6 @@ public class moveCont : MonoBehaviour
     }
 
     private bool cancellingGrounded;
-
-    private void airSlide()
-    {
-        if (!grounded)
-        {
-            if (Physics.CheckSphere(groundCheck.transform.position, 0.2f, whatIsGround))
-            {
-                airGround = true;
-            }
-
-        }
-    }
 
     /// <summary>
     /// Handle ground detection

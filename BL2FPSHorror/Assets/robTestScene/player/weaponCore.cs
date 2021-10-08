@@ -16,9 +16,11 @@ public class weaponCore : MonoBehaviour
     public int bashDuration, bashStep;
     public Vector3 shootAfterSpreadDirection;
     public int weaponDamage;
+    public float bashDistance , bashForce;
     public enum reState { no , eject , insert }
     public reState gunState;
     public bool startBash;
+    public int reloadStep, reloadTime, reloadInsertTime;
     /// <summary>
     ///  no -> eject -> insert -> no
     /// </summary>
@@ -56,10 +58,40 @@ public class weaponCore : MonoBehaviour
 
 
 
-        Debug.DrawRay(weaponBarrel.transform.position, shootAfterSpreadDirection, Color.black);
-        tryFireWeapon();
-        cycleCycle();
+        Debug.DrawRay(weaponBarrel.transform.position, weaponBarrel.transform.forward, Color.black);
+        if(gunState == reState.no)
+        {
+            tryFireWeapon();
+            cycleCycle();
+        }
+        
         gunBash();
+
+        switch(gunState)
+        {
+
+            case reState.eject:
+                reloadStep++;
+                if (reloadStep >= reloadInsertTime) 
+                {
+                    gunState = reState.insert;
+                    actuallyReload();
+                }
+                
+                break;
+            case reState.insert:
+                reloadStep++;
+                if (reloadStep == reloadTime)
+                {
+                    reloadStep = 0;
+                    gunAnimationCont.callReloadEndAnimation();
+                    gunState = reState.no;
+                }
+                    break;
+
+        }
+
+        
 
     }
 
@@ -67,10 +99,31 @@ public class weaponCore : MonoBehaviour
     {
         if(startBash)
         {
+            if(gunState == reState.insert)
+            {
+              
+                    reloadStep = 0;
+                    gunAnimationCont.callReloadEndAnimation();
+                    gunState = reState.no;
+                
+            }
             bashStep++;
             bashStep = Mathf.Clamp(bashStep, 0, bashDuration);
             RaycastHit bashHit;
-            Physics.Raycast(weaponBarrel.transform.position, transform.forward, out bashHit, maxShotDistance);
+            if(Physics.Raycast(weaponBarrel.transform.position, transform.forward, out bashHit, bashDistance))
+            {
+                switch (bashHit.collider.gameObject.tag)
+                {
+                    case "zombieHead":
+
+                        bashHit.collider.gameObject.GetComponent<zombieReferenceComp>().zombie.doStun(1);
+                        break;
+                    case "zombieBody":
+
+                        bashHit.collider.gameObject.GetComponent<zombieReferenceComp>().zombie.doStun(1);
+                        break;
+                }
+            }
             Debug.DrawRay(weaponBarrel.transform.position, weaponBarrel.transform.forward , Color.cyan);
 
             
@@ -81,11 +134,10 @@ public class weaponCore : MonoBehaviour
                 startBash = false;
             }
 
-            if (bashHit.collider.gameObject != null)
-            {
+          
 
-            }
-           
+
+
         }
     }
 
@@ -124,16 +176,34 @@ public class weaponCore : MonoBehaviour
         float y = Random.insideUnitCircle.y * currentAimCone; ;
         float z = Random.Range(-currentAimCone / 1, currentAimCone/ 1);
 
+        
+
         //Calculate Direction with Spread
         //Vector3 shootAfterSpreadDirection = weaponBarrel.transform.forward + new Vector3(-x, -y, -z);
 
         RaycastHit weaponHit;
-        Physics.Raycast(Camera.main.transform.position, Camera.main.transform.forward , out weaponHit , maxShotDistance);
-
-        switch (weaponHit.collider.gameObject.tag)
+        if (Physics.Raycast(weaponBarrel.transform.position, weaponBarrel.transform.forward, out weaponHit, maxShotDistance))
         {
-        
+            switch (weaponHit.collider.gameObject.tag) 
+            {
+                case "zombieHead":
+
+                    weaponHit.collider.gameObject.GetComponent<zombieReferenceComp>().zombie.takeDamage(weaponDamage , 100);
+                    break;
+                case "zombieBody":
+                    weaponHit.collider.gameObject.GetComponent<zombieReferenceComp>().zombie.takeDamage(weaponDamage , 1);
+                    break;
+            }
+            
+               
+            
         }
+
+        
+      
+        
+
+    
 
     }
 
@@ -141,10 +211,8 @@ public class weaponCore : MonoBehaviour
     {
         if(ammoPool - magCapacity > 0)
         {
-            currentAmmo = magCapacity;
-            ammoPool -= magCapacity;
-            ammoPool = Mathf.Clamp(ammoPool, 0, 1000);
             gunAnimationCont.callReloadAnimation();
+            gunState = reState.eject;
         }
         else
         {
@@ -157,6 +225,13 @@ public class weaponCore : MonoBehaviour
        
 
         
+    }
+
+    public void actuallyReload()
+    {
+        currentAmmo = magCapacity;
+        ammoPool -= magCapacity;
+        ammoPool = Mathf.Clamp(ammoPool, 0, 1000);
     }
 
     public void bash()
