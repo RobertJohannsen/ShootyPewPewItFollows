@@ -15,6 +15,7 @@ public class moveCont : MonoBehaviour
     public Transform orientation;
 
     public Transform respawnPoint;
+    public weaponCore wepCore;
 
     //Other
     private Rigidbody rb;
@@ -215,6 +216,7 @@ public class moveCont : MonoBehaviour
         Look();
         showDebug();
         handleHeadbob();
+        calculateAimCone();
     }
 
     /// <summary>
@@ -361,17 +363,35 @@ public class moveCont : MonoBehaviour
                 timer += Time.deltaTime;
                 playerCam.transform.localPosition = new Vector3(
                     playerCam.transform.localPosition.x
-                    , defaultYpos + ((crouching ? headBobCrouchAmount : headBobWalkAmount) * Mathf.Sin(timer * (crouching ? headBobCrouchSpeed : headBobWalkSpeed)) - headbobYOffset)
+                    , groundCheck.transform.position.y +defaultYpos + ((crouching ? headBobCrouchAmount : headBobWalkAmount) * Mathf.Sin(timer * (crouching ? headBobCrouchSpeed : headBobWalkSpeed)) - headbobYOffset)
                     , playerCam.transform.localPosition.z);
             }
             else
             {
                 playerCam.transform.localPosition = new Vector3(
                    playerCam.transform.localPosition.x
-                   , defaultYpos - headbobYOffset
+                   , groundCheck.transform.position.y+  defaultYpos - headbobYOffset
                    , playerCam.transform.localPosition.z);
             }
         }
+    }
+
+    void calculateAimCone()
+    {
+        //  if((x != 0) || (y != 0))
+        //  {
+        //      wepCore.setAimCone(wepCore.moveAimConeAccuracy);
+        //  }
+        //  else
+        //  {
+        //      wepCore.setAimCone(wepCore.baseAimConeAccuracy);
+        //  }
+
+        float speedRatio = rb.velocity.magnitude / maxSpeed;
+        float aimConeCurrent = Mathf.Clamp(speedRatio,0 ,1) * wepCore.moveAimConeAccuracy;
+        float finalAimCone = aimConeCurrent + wepCore.baseAimConeAccuracy;
+        wepCore.setAimCone(finalAimCone);
+
     }
     void handleMovePly()
     {

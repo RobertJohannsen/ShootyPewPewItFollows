@@ -7,7 +7,7 @@ public class zombieAI : MonoBehaviour
 {
     [Header("Assignables")]
     public LineRenderer lr;
-    public GameObject player ,eyes ,root;
+    public GameObject player ,eyes ,root , ragdoll;
     public NavMeshAgent zombieAgent;
     public Vector3 overrideTarget;
     public LayerMask levelGeo;
@@ -29,6 +29,9 @@ public class zombieAI : MonoBehaviour
     public float Hp, MaxHp;
 
     public float radiusFromTarget;
+
+    public enum state { wander, chase, die };
+    public state zombieType;
 
     [Header("Behaviour")]
     public AnimationCurve accelerationCurve;
@@ -59,6 +62,11 @@ public class zombieAI : MonoBehaviour
     public float alertRadius;
     public int stunStep, stunDur;
 
+    public float sleepyAlertRadius;
+    public float sleepyAlertInSightRadius;
+
+    
+
 
 
 
@@ -82,27 +90,56 @@ public class zombieAI : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if(didAttack)
+      
+        distanceToPlayer = (this.transform.position - player.transform.position).magnitude;
+
+      
+        currentSpeed = zombieAgent.velocity.magnitude;
+
+        isMove = currentSpeed == 0 ? false : true;
+
+
+
+        if(zombieType == state.chase)
+        {
+            zombieMovementinChase();
+            zombieAgent.destination = player.transform.position;
+        }
+        
+        if(distanceToPlayer < sleepyAlertRadius)
+        {
+            startChase();
+        }
+
+        healthSlowdown();
+
+        
+        Debug.DrawRay(this.transform.position, this.transform.forward);
+        //Debug.Log(zombieAgent.velocity.magnitude);
+        checkBleedStacks();
+        visualisePath();
+        checkFOV();
+        CheckForAttack();
+        CheckForStun();
+    }
+
+    private void zombieMovementinChase()
+    {
+        if (didAttack)
         {
             zombieAgent.velocity = storeVelocity;
             storeVelocity = Vector3.zero;
             didAttack = false;
 
         }
-        
-        distanceToPlayer = (this.transform.position - player.transform.position).magnitude;
 
-        if ((this.transform.position - player.transform.position).magnitude < alertRadius) 
+        if ((this.transform.position - player.transform.position).magnitude < alertRadius)
         {
             isActive = true;
         }
 
-        currentSpeed = zombieAgent.velocity.magnitude;
-
-        isMove = currentSpeed == 0 ? false : true;
-
         float topTierSpeedThres = ((Mathf.Clamp(speedTopBracket, 0, 100)) / 100) * speedinUse;
-        if (currentSpeed > topTierSpeedThres) 
+        if (currentSpeed > topTierSpeedThres)
         {
             attackStep = attackWindUp;
             timeInTopSpeed += Time.deltaTime;
@@ -113,7 +150,7 @@ public class zombieAI : MonoBehaviour
                 startBreaking = true;
             }
             root.transform.localRotation = Quaternion.Euler(22, 0, 0);
-            
+
         }
         else
         {
@@ -121,9 +158,9 @@ public class zombieAI : MonoBehaviour
             timeInTopSpeed = 0;
         }
 
-        if(startBreaking)
+        if (startBreaking)
         {
-            if(currentSpeed > inRangeSlowdownSpeed)
+            if (currentSpeed > inRangeSlowdownSpeed)
             {
                 speedinUse = inRangeSlowdownSpeed;
             }
@@ -134,7 +171,7 @@ public class zombieAI : MonoBehaviour
             }
         }
 
-        if(isMove)
+        if (isMove)
         {
             moveTimeElapsed++;
             moveTimeElapsed = Mathf.Clamp(moveTimeElapsed, 0, timeToMaxAcceleration);
@@ -152,18 +189,8 @@ public class zombieAI : MonoBehaviour
         {
             zombieAgent.angularSpeed = normalRunningTurningSpeed;
         }
-            zombieAgent.acceleration = Mathf.Clamp((accelerationCurve.Evaluate(moveTimeElapsed / timeToMaxAcceleration)) * maxAcceleration ,accelerationFloor , maxAcceleration);
+        zombieAgent.acceleration = Mathf.Clamp((accelerationCurve.Evaluate(moveTimeElapsed / timeToMaxAcceleration)) * maxAcceleration, accelerationFloor, maxAcceleration);
 
-        healthSlowdown();
-
-        zombieAgent.destination = player.transform.position;
-        Debug.DrawRay(this.transform.position, this.transform.forward);
-        //Debug.Log(zombieAgent.velocity.magnitude);
-        checkBleedStacks();
-        visualisePath();
-        checkFOV();
-        CheckForAttack();
-        CheckForStun();
     }
 
     private void healthSlowdown()
@@ -173,13 +200,17 @@ public class zombieAI : MonoBehaviour
         zombieAgent.speed = speedinUse * healthSlowMultiplier;
     }
 
+    private void startChase()
+    {
+        zombieType = state.chase;
+    }
+
     private void LateUpdate()
     {
-
-        
-
         if (Hp == 0)
         {
+            GameObject doll = Instantiate(ragdoll, this.transform.position, Quaternion.identity);
+            doll.transform.localRotation = Quaternion.Euler(15, 0, 0);
             Destroy(this.gameObject);
         }
     }
@@ -209,12 +240,9 @@ public class zombieAI : MonoBehaviour
 
                         if (angleToPlayer >= -FOV / 2 && angleToPlayer <= FOV / 2)
                         {
-
+                            startChase();
                         }
-                        else
-                        {
-
-                        }
+                    
 
 
                     }

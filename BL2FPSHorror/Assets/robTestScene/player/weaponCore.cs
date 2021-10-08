@@ -7,20 +7,25 @@ public class weaponCore : MonoBehaviour
     public int currentWeaponID;
     public weaponLibrary weaponLib;
     public gunAnimationController gunAnimationCont;
-    public GameObject weaponBarrel;
+    public GameObject weaponBarrel ,bulletHit;
     public bool triggerDown , shootReady;
     public int elapseCycleTime , ejectFrames , totalCycleTime;
     public float baseAimConeAccuracy, moveAimConeAccuracy , currentAimCone;
+    public float finalAimCone;
     public float maxShotDistance;
     public int currentAmmo, magCapacity , ammoPool;
     public int bashDuration, bashStep;
     public Vector3 shootAfterSpreadDirection;
     public int weaponDamage;
     public float bashDistance , bashForce;
+    public float recoilStacks;
+    public float stability ,recoilBase , currentRecoil;
+    public int recoilStacksStep, recoilTime;
     public enum reState { no , eject , insert }
     public reState gunState;
     public bool startBash;
     public int reloadStep, reloadTime, reloadInsertTime;
+    public Vector3 forwardVector;
     /// <summary>
     ///  no -> eject -> insert -> no
     /// </summary>
@@ -91,8 +96,36 @@ public class weaponCore : MonoBehaviour
 
         }
 
-        
+        handleRecoil();
+        finalAimCone = currentAimCone + recoilStacks;
 
+    }
+
+    public void setAimCone(float deviation)
+    {
+        currentAimCone = deviation;
+    }
+
+    public float getGunAccuracyNow(float baseAcc , float maxAcc)
+    {
+        finalAimCone = Mathf.Clamp(finalAimCone, 0, moveAimConeAccuracy);
+        return ((finalAimCone/moveAimConeAccuracy)*(maxAcc - baseAcc));
+    }
+
+    public void handleRecoil()
+    {
+        if(recoilStacks > 0)
+        {
+            //doRecoil
+            recoilStacksStep++;
+            recoilStacksStep = Mathf.Clamp(recoilStacksStep, 0, recoilTime);
+            if(recoilStacksStep == recoilTime)
+            {
+                recoilStacks -= stability;
+                recoilStacks = Mathf.Clamp(recoilStacks, 0, 999);
+                recoilStacksStep = 0;
+            }
+        }
     }
 
     public void gunBash()
@@ -116,11 +149,11 @@ public class weaponCore : MonoBehaviour
                 {
                     case "zombieHead":
 
-                        bashHit.collider.gameObject.GetComponent<zombieReferenceComp>().zombie.doStun(1);
+                        bashHit.collider.gameObject.GetComponent<zombieReferenceComp>().zombie.doStun(bashForce);
                         break;
                     case "zombieBody":
 
-                        bashHit.collider.gameObject.GetComponent<zombieReferenceComp>().zombie.doStun(1);
+                        bashHit.collider.gameObject.GetComponent<zombieReferenceComp>().zombie.doStun(bashForce);
                         break;
                 }
             }
@@ -172,18 +205,26 @@ public class weaponCore : MonoBehaviour
     public void fireWeapon()
     {
         gunAnimationCont.callShootAnimation();
-        float x = Random.insideUnitCircle.x * currentAimCone;
-        float y = Random.insideUnitCircle.y * currentAimCone; ;
-        float z = Random.Range(-currentAimCone / 1, currentAimCone/ 1);
 
         
+        forwardVector = Vector3.forward;
+        float deviation = Random.Range(0f, finalAimCone);
+        float angle = Random.Range(0f, 360f);
+        forwardVector = Quaternion.AngleAxis(deviation, Vector3.up) * forwardVector;
+        forwardVector = Quaternion.AngleAxis(angle, Vector3.forward) * forwardVector;
+        forwardVector = Camera.main.transform.rotation * forwardVector;
+
+        recoilStacks += recoilBase;
+
 
         //Calculate Direction with Spread
         //Vector3 shootAfterSpreadDirection = weaponBarrel.transform.forward + new Vector3(-x, -y, -z);
 
         RaycastHit weaponHit;
-        if (Physics.Raycast(weaponBarrel.transform.position, weaponBarrel.transform.forward, out weaponHit, maxShotDistance))
+        if (Physics.Raycast(Camera.main.transform.position, forwardVector, out weaponHit, maxShotDistance))
         {
+            GameObject hitPoint = Instantiate(bulletHit , weaponHit.point, Quaternion.identity);
+            hitPoint.transform.SetParent(weaponHit.transform);
             switch (weaponHit.collider.gameObject.tag) 
             {
                 case "zombieHead":
