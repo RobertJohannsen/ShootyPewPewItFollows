@@ -82,6 +82,7 @@ public class zombieAI : MonoBehaviour
     // Start is called before the first frame update
     private void Awake()
     {
+        player = GameObject.FindGameObjectWithTag("Player");
         Hp = MaxHp;
         zombieAgent = this.GetComponent<NavMeshAgent>();
     }
