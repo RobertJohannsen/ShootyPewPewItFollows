@@ -70,10 +70,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   lr: {fileID: 371779918190803528}
-  player: {fileID: 0}
+  player: {fileID: 2266567637373588896, guid: 438c021639c68a84dadac85d1b124a3b, type: 3}
   eyes: {fileID: 371779918458261944}
   root: {fileID: 371779918553298162}
-  ragdoll: {fileID: 0}
+  ragdoll: {fileID: 8168184534970451209, guid: 81531dffe60f4d54ba93005d3d6d6dff, type: 3}
   zombieAgent: {fileID: 0}
   overrideTarget: {x: 0, y: 0, z: 0}
   levelGeo:

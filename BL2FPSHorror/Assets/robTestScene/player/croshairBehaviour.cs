@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 public class croshairBehaviour : MonoBehaviour
 {
-    public float baseX ,maxX , curX;
+    public float baseX ,maxX , curX , scaleX , scaleY;
     public Transform nxC , xC , nyC , yC;
     public weaponCore wepCore;
     // Start is called before the first frame update
@@ -17,7 +17,10 @@ public class croshairBehaviour : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        nxC.localScale = new Vector3(scaleX, scaleY, 1);
+        nyC.localScale = new Vector3(scaleX, scaleY, 1);
+        xC.localScale = new Vector3(scaleX, scaleY, 1);
+        yC.localScale = new Vector3(scaleX, scaleY, 1);
     }
 
      void LateUpdate()

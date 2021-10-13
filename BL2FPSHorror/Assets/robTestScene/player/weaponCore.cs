@@ -4,28 +4,60 @@ using UnityEngine;
 
 public class weaponCore : MonoBehaviour
 {
-    public int currentWeaponID;
+    [Header("assignables")]
     public weaponLibrary weaponLib;
     public gunAnimationController gunAnimationCont;
     public GameObject weaponBarrel ,bulletHit;
+    public moveCont moveCore;
+    public GameObject muzzleFlash;
+
+    [Header("status")]
+    public int currentWeaponID;
     public bool triggerDown , shootReady;
-    public int elapseCycleTime , ejectFrames , totalCycleTime;
-    public float baseAimConeAccuracy, moveAimConeAccuracy , currentAimCone;
-    public float finalAimCone;
+    public bool startBash;
+    public bool hasShot;
+    public bool doWeaponSway;
+    public bool doWeaponBob;
+    public bool canFullAuto;
+
+    [Header("assignable behaviour")]
+    public float baseAimConeAccuracy, moveAimConeAccuracy ;
+    public int ejectFrames, totalCycleTime;
     public float maxShotDistance;
-    public int currentAmmo, magCapacity , ammoPool;
-    public int bashDuration, bashStep;
-    public Vector3 shootAfterSpreadDirection;
+    public int magCapacity , ammoPool;
+    public int bashDuration;
     public int weaponDamage;
     public float bashDistance , bashForce;
-    public float recoilStacks;
-    public float stability ,recoilBase , currentRecoil;
-    public int recoilStacksStep, recoilTime;
-    public enum reState { no , eject , insert }
+    public int reloadTime, reloadInsertTime;
+    public float swayAmount, swaySmoothing ,swayClamp;
+    public float bobSmoothing, bobXAmp , bobYAmp , bobFreq;
+    public Vector3 bobOffset;
+    
+
+    [Header("Recoil")]
+    public float recoilAmount;
+    public float moveDevTime;
+    public float moveDevReturnTime;
+
+    [Header("Ejection")]
+    public GameObject casing;
+    public GameObject ejectionPort;
+    public float ejectionForce;
+    public float ejectionSpin;
+
+    [Header("View Behaviour")]
+    public float finalAimCone, currentAimCone;
+    public int elapseCycleTime;
+    public int currentAmmo;
+    public int bashStep;
+
+    public enum reState { no, eject, insert }
     public reState gunState;
-    public bool startBash;
-    public int reloadStep, reloadTime, reloadInsertTime;
-    public Vector3 forwardVector;
+    public int reloadStep;
+    private Vector3 forwardVector;
+
+   
+
     /// <summary>
     ///  no -> eject -> insert -> no
     /// </summary>
@@ -40,15 +72,11 @@ public class weaponCore : MonoBehaviour
     void Update()
     {
 
-        if (Input.GetKeyDown(KeyCode.Mouse0))
-        {
-            triggerDown = true;
-        }
+       
+            triggerDown = Input.GetKeyDown(KeyCode.Mouse0);
 
-        if (Input.GetKeyUp(KeyCode.Mouse0))
-        {
-            triggerDown = false;
-        }
+        if (canFullAuto) triggerDown = Input.GetKey(KeyCode.Mouse0);
+      
 
         if (Input.GetKeyDown(KeyCode.Mouse1))
         {
@@ -96,8 +124,10 @@ public class weaponCore : MonoBehaviour
 
         }
 
+
+
         handleRecoil();
-        finalAimCone = currentAimCone + recoilStacks;
+        //finalAimCone = currentAimCone + recoilStacks;
 
     }
 
@@ -114,17 +144,13 @@ public class weaponCore : MonoBehaviour
 
     public void handleRecoil()
     {
-        if(recoilStacks > 0)
+       if(moveCore.isMove)
         {
-            //doRecoil
-            recoilStacksStep++;
-            recoilStacksStep = Mathf.Clamp(recoilStacksStep, 0, recoilTime);
-            if(recoilStacksStep == recoilTime)
-            {
-                recoilStacks -= stability;
-                recoilStacks = Mathf.Clamp(recoilStacks, 0, 999);
-                recoilStacksStep = 0;
-            }
+            finalAimCone = Mathf.Lerp(finalAimCone, moveAimConeAccuracy, moveDevTime);
+        }
+       else
+        {
+            finalAimCone = Mathf.Lerp(finalAimCone , baseAimConeAccuracy ,moveDevReturnTime);
         }
     }
 
@@ -182,17 +208,8 @@ public class weaponCore : MonoBehaviour
             {
                 if (gunState == reState.no)
                 {
-                    currentAmmo--;
-
-
-
-
                     fireWeapon();
                             //fire actual bullet
-                            
-
-                        
-
                     shootReady = false;
                     //do reload here
                   
@@ -204,9 +221,12 @@ public class weaponCore : MonoBehaviour
     }
     public void fireWeapon()
     {
-        gunAnimationCont.callShootAnimation();
+        currentAmmo--;
 
-        
+        gunAnimationCont.callShootAnimation();
+        GameObject flash = Instantiate(muzzleFlash, weaponBarrel.transform.position, Quaternion.identity);
+        flash.transform.SetParent(weaponBarrel.transform);
+        finalAimCone += recoilAmount;
         forwardVector = Vector3.forward;
         float deviation = Random.Range(0f, finalAimCone);
         float angle = Random.Range(0f, 360f);
@@ -214,7 +234,6 @@ public class weaponCore : MonoBehaviour
         forwardVector = Quaternion.AngleAxis(angle, Vector3.forward) * forwardVector;
         forwardVector = Camera.main.transform.rotation * forwardVector;
 
-        recoilStacks += recoilBase;
 
 
         //Calculate Direction with Spread
@@ -288,20 +307,11 @@ public class weaponCore : MonoBehaviour
             elapseCycleTime++;
             elapseCycleTime = Mathf.Clamp(elapseCycleTime , 0 , totalCycleTime);
 
-            if (elapseCycleTime >= ejectFrames)
+            if (elapseCycleTime == ejectFrames)
             {
-         //       ejectCasing();
+                ejectCasing();
             }
-            
-                  
                             //spawn bullet casing
-                            
-                   
-
-               
-
-            
-
             if (elapseCycleTime == totalCycleTime)
             {
                 elapseCycleTime = 0;
@@ -312,6 +322,10 @@ public class weaponCore : MonoBehaviour
 
     private void ejectCasing()
     {
-        Debug.Log("ejecting casing");
+        GameObject newCasing = Instantiate(casing, ejectionPort.transform.position, Quaternion.identity);
+        newCasing.transform.GetChild(0).GetComponent<Rigidbody>().AddForce(ejectionForce * ejectionPort.transform.forward);
+        newCasing.transform.GetChild(0).GetComponent<Rigidbody>().angularVelocity = new Vector3(ejectionSpin , newCasing.transform.GetChild(0).GetComponent<Rigidbody>().angularVelocity.y , newCasing.transform.GetChild(0).GetComponent<Rigidbody>().angularVelocity.z);
+
+        //Debug.Log("ejecting casing");
     }
 }

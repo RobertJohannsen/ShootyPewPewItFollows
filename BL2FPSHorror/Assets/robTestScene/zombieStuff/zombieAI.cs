@@ -7,7 +7,7 @@ public class zombieAI : MonoBehaviour
 {
     [Header("Assignables")]
     public LineRenderer lr;
-    public GameObject player ,eyes ,root , ragdoll;
+    public GameObject player ,eyes ,root , ragdoll ,head , body;
     public NavMeshAgent zombieAgent;
     public Vector3 overrideTarget;
     public LayerMask levelGeo;
@@ -24,8 +24,11 @@ public class zombieAI : MonoBehaviour
     public int bleedStacks;
     public bool damageBreak;
     public float speedinUse;
+    public bool showMesh;
+    public bool canCollide;
+    public bool hasFallen;
 
-
+    public int shoveAmount, shoveThres;
     public float Hp, MaxHp;
 
     public float radiusFromTarget;
@@ -61,9 +64,13 @@ public class zombieAI : MonoBehaviour
     public int damage;
     public float alertRadius;
     public int stunStep, stunDur;
+    public int fallenStep, fallenTime;
+    public float getUpSpeed;
 
     public float sleepyAlertRadius;
     public float sleepyAlertInSightRadius;
+
+    public GameObject dummy;
 
     
 
@@ -98,21 +105,34 @@ public class zombieAI : MonoBehaviour
 
         isMove = currentSpeed == 0 ? false : true;
 
-
-
-        if(zombieType == state.chase)
+        if(!stunned)
         {
-            zombieMovementinChase();
-            zombieAgent.destination = player.transform.position;
+            if (zombieType == state.chase)
+            {
+                zombieMovementinChase();
+                zombieAgent.destination = player.transform.position;
+            }
+
+            if (distanceToPlayer < sleepyAlertRadius)
+            {
+                startChase();
+            }
+
+            healthSlowdown();
         }
+
+        if(shoveAmount >= shoveThres)
+        {
+            hasFallen = true;
+            startFall();
+        }
+   
+            zombieAgent.isStopped = stunned ;
+        zombieAgent.isStopped = hasFallen;
         
-        if(distanceToPlayer < sleepyAlertRadius)
-        {
-            startChase();
-        }
-
-        healthSlowdown();
-
+    
+        viewMesh();
+        
         
         Debug.DrawRay(this.transform.position, this.transform.forward);
         //Debug.Log(zombieAgent.velocity.magnitude);
@@ -121,6 +141,16 @@ public class zombieAI : MonoBehaviour
         checkFOV();
         CheckForAttack();
         CheckForStun();
+        inFall();
+    }
+
+    private void viewMesh()
+    {
+        body.GetComponent<MeshRenderer>().enabled = showMesh;
+        head.GetComponent<MeshRenderer>().enabled = showMesh;
+
+        body.GetComponent<CapsuleCollider>().enabled = canCollide;
+        head.GetComponent<SphereCollider>().enabled = canCollide;
     }
 
     private void zombieMovementinChase()
@@ -210,7 +240,9 @@ public class zombieAI : MonoBehaviour
         if (Hp == 0)
         {
             GameObject doll = Instantiate(ragdoll, this.transform.position, Quaternion.identity);
-            doll.transform.localRotation = Quaternion.Euler(15, 0, 0);
+            doll.GetComponent<Rigidbody>().velocity = zombieAgent.velocity;
+            doll.transform.rotation = zombieAgent.transform.rotation;
+          //  doll.transform.localRotation = Quaternion.Euler(new Vector3(zombieAgent.transform.rotation.x + 15, zombieAgent.transform.rotation.y , zombieAgent.transform.rotation.z));
             Destroy(this.gameObject);
         }
     }
@@ -297,6 +329,7 @@ public class zombieAI : MonoBehaviour
             if(stunStep == stunDur)
             {
                 stunned = false;
+                stunStep = 0;
             }
         }
     }
@@ -312,14 +345,11 @@ public class zombieAI : MonoBehaviour
         storeVelocity = zombieAgent.velocity;
 
         float topTierSpeedThres = ((Mathf.Clamp(speedTopBracket, 0, 100)) / 100) * speedinUse;
-        if (zombieAgent.velocity.magnitude > topTierSpeedThres)
+        if (zombieAgent.velocity.magnitude > topTierSpeedThres && Hp < 60)
         {
             zombieAgent.velocity = (-storeVelocity * 0.7f) + storeVelocity;
         }
-        else
-        {
-            zombieAgent.velocity = (-storeVelocity * 0.4f) + storeVelocity;
-        }
+      
         
 
 
@@ -332,7 +362,16 @@ public class zombieAI : MonoBehaviour
 
         storeVelocity = zombieAgent.velocity;
         Vector3 storedVelocityDir = zombieAgent.velocity.normalized + zombieAgent.transform.position;
-            zombieAgent.velocity = (-zombieAgent.transform.forward *bashForce);
+        int fallChance = Random.Range(0, 5);
+        if((fallChance <= 2) || shoveAmount > shoveThres)
+        {
+           
+        }
+        else
+        {
+            //shoveAmount++;
+            zombieAgent.velocity = (-zombieAgent.transform.forward * bashForce);
+        }
 
     }
 
@@ -355,6 +394,36 @@ public class zombieAI : MonoBehaviour
         {
             attackStep = 0;
             doAttack();
+        }
+    }
+
+    void startFall()
+    {
+        if(hasFallen)
+        {
+            if(dummy == null)
+            {
+                canCollide = false;
+                showMesh = false;
+                dummy = Instantiate(ragdoll, this.transform.position, Quaternion.identity);
+                dummy.GetComponent<Rigidbody>().velocity = zombieAgent.velocity;
+                dummy.transform.rotation = zombieAgent.transform.rotation;
+            }
+           
+        }
+    }
+
+    void inFall()
+    {
+        if(hasFallen)
+        {
+            fallenStep++;
+            if(fallenStep >= fallenTime)
+            {
+                dummy.transform.position = Vector3.Lerp(dummy.transform.position, this.transform.position, getUpSpeed);
+                dummy.transform.rotation = Quaternion.Euler(new Vector3(0, Mathf.Lerp(dummy.transform.localRotation.y , this.transform.localRotation.y , getUpSpeed), 0));
+;                
+            }
         }
     }
 

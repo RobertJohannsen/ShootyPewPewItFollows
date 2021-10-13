@@ -42,7 +42,7 @@ public class moveCont : MonoBehaviour
     private float gravMulti = 100;
     private Vector3 lastGroundedpos;
     private Transform ply;
-    private bool isMove;
+    public bool isMove;
     private GameObject groundCheck;
     
 
@@ -208,6 +208,8 @@ public class moveCont : MonoBehaviour
             slowdownAfterDamage = false;
         }
 
+        isMove = rb.velocity.magnitude > 0.07f ? true : false;
+
 
         //moveSpeed = speedCap - slowDamageModifier;
         RaycastHit placePoint;
@@ -368,24 +370,18 @@ public class moveCont : MonoBehaviour
             }
             else
             {
-                playerCam.transform.localPosition = new Vector3(
+                playerCam.transform.localPosition = Vector3.Lerp(playerCam.transform.localPosition , new Vector3(
                    playerCam.transform.localPosition.x
-                   , groundCheck.transform.position.y+  defaultYpos - headbobYOffset
-                   , playerCam.transform.localPosition.z);
+                   , groundCheck.transform.position.y + defaultYpos - headbobYOffset
+                   , playerCam.transform.localPosition.z) , 0.0001f)
+                    ;
             }
         }
     }
 
     void calculateAimCone()
     {
-        //  if((x != 0) || (y != 0))
-        //  {
-        //      wepCore.setAimCone(wepCore.moveAimConeAccuracy);
-        //  }
-        //  else
-        //  {
-        //      wepCore.setAimCone(wepCore.baseAimConeAccuracy);
-        //  }
+        
 
         float speedRatio = rb.velocity.magnitude / maxSpeed;
         float aimConeCurrent = Mathf.Clamp(speedRatio,0 ,1) * wepCore.moveAimConeAccuracy;
