@@ -82,7 +82,7 @@ public class zombieAI : MonoBehaviour
     // Start is called before the first frame update
     private void Awake()
     {
-        player = GameObject.FindGameObjectWithTag("Player");
+      
         Hp = MaxHp;
         zombieAgent = this.GetComponent<NavMeshAgent>();
     }
@@ -98,6 +98,12 @@ public class zombieAI : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (!player)
+        {
+            Initialise();
+            return;
+        }
+        
       
         distanceToPlayer = (this.transform.position - player.transform.position).magnitude;
 
@@ -143,6 +149,14 @@ public class zombieAI : MonoBehaviour
         CheckForAttack();
         CheckForStun();
         inFall();
+    }
+
+    private void Initialise()
+    {
+        if (GameObject.FindGameObjectWithTag("Player"))
+        {
+            player = GameObject.FindGameObjectWithTag("Player");
+        }
     }
 
     private void viewMesh()
