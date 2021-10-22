@@ -1115,7 +1115,11 @@ GameObject:
   m_Component:
   - component: {fileID: 2266567637407311839}
   m_Layer: 0
+<<<<<<< Updated upstream
   m_Name: head
+=======
+  m_Name: plyCont
+>>>>>>> Stashed changes
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

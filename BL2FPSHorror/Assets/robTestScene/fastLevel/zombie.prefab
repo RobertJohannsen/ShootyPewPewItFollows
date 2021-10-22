@@ -194,7 +194,12 @@ MonoBehaviour:
   stunDur: 0
   sleepyAlertRadius: 3
   sleepyAlertInSightRadius: 0
+<<<<<<< Updated upstream:BL2FPSHorror/Assets/robTestScene/fastLevel/zombie.prefab
 --- !u!120 &371779918190803528
+=======
+  dummy: {fileID: 8168184534970451209, guid: 81531dffe60f4d54ba93005d3d6d6dff, type: 3}
+--- !u!120 &6646176313353717140
+>>>>>>> Stashed changes:BL2FPSHorror/Assets/robTestScene/fastLevel/zombieWander.prefab
 LineRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

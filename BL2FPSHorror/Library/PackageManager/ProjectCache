@@ -5,16 +5,26 @@ m_ProjectFiles:
     m_ContentTrackingEnabled: 1
     m_ModificationDate:
       serializedVersion: 2
+<<<<<<< Updated upstream
       ticks: 637692875335610641
     m_Hash: 1118480572
+=======
+      ticks: 637703759097161088
+    m_Hash: 3427971894
+>>>>>>> Stashed changes
   m_LockFileStatus:
     m_FilePath: D:/Users/virik/Documents/GitHub/ShootyPewPewItFollows/BL2FPSHorror/Packages/packages-lock.json
     m_PathExists: 1
     m_ContentTrackingEnabled: 1
     m_ModificationDate:
       serializedVersion: 2
+<<<<<<< Updated upstream
       ticks: 637692875335610641
     m_Hash: 4252936432
+=======
+      ticks: 637703759098048443
+    m_Hash: 3824979541
+>>>>>>> Stashed changes
 m_EmbeddedPackageManifests:
   m_ManifestsStatus: {}
 m_PackageAssets:
@@ -138,6 +148,7 @@ m_PackageAssets:
         - 2.7.4
         - 2.7.5
         - 2.7.8
+        - 2.7.9
         - 2.8.0-exp.1
         - 2.8.0-exp.2
         - 2.8.0-pre.1
@@ -166,6 +177,7 @@ m_PackageAssets:
         - 2.7.4
         - 2.7.5
         - 2.7.8
+        - 2.7.9
         - 2.8.0-exp.1
         - 2.8.0-exp.2
         - 2.8.0-pre.1
@@ -909,10 +921,12 @@ m_PackageAssets:
         - 1.1.26
         - 1.1.27
         - 1.1.29
+        - 1.1.30
         compatible:
         - 1.1.27
         - 1.1.29
-        verified: 1.1.29
+        - 1.1.30
+        verified: 1.1.30
       dependencies:
       - name: com.unity.ext.nunit
         version: 1.0.6
@@ -1195,6 +1209,7 @@ m_PackageAssets:
         - 1.6.0-pre.5
         - 1.6.1
         - 1.6.2
+        - 1.6.3
         compatible:
         - 1.4.8
         - 1.5.0-pre.2
@@ -1216,6 +1231,7 @@ m_PackageAssets:
         - 1.6.0-pre.5
         - 1.6.1
         - 1.6.2
+        - 1.6.3
         verified: 1.4.8
       dependencies:
       - name: com.unity.modules.director
@@ -3603,9 +3619,20 @@ m_PackageAssets:
       versions:
         all:
         - 2.0.0
+<<<<<<< Updated upstream
+=======
+        - 2.0.1-preview.1
+        - 2.0.2
+>>>>>>> Stashed changes
         compatible:
         - 2.0.0
+<<<<<<< Updated upstream
         verified: 2.0.0
+=======
+        - 2.0.1-preview.1
+        - 2.0.2
+        verified: 2.0.2
+>>>>>>> Stashed changes
       dependencies: []
       resolvedDependencies: []
       keywords: []
@@ -3662,6 +3689,12 @@ m_PackageAssets:
         - 4.3.0
         - 4.3.1
         - 4.3.2
+<<<<<<< Updated upstream
+=======
+        - 4.6.0-preview
+        - 4.7.0-preview
+        - 4.9.1
+>>>>>>> Stashed changes
         compatible:
         - 4.0.0-preview
         - 4.0.0
@@ -3675,6 +3708,12 @@ m_PackageAssets:
         - 4.3.0
         - 4.3.1
         - 4.3.2
+<<<<<<< Updated upstream
+=======
+        - 4.6.0-preview
+        - 4.7.0-preview
+        - 4.9.1
+>>>>>>> Stashed changes
         verified: 4.3.2
       dependencies: []
       resolvedDependencies: []
